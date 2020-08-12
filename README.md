@@ -1,3 +1,15 @@
+# This is learning how to create video live Chat
+
+What I've learnt
+- Socket.io (https://socket.io/)
+- Next.js
+- Peer to Peer (https://github.com/feross/simple-peer)
+
+TODO
+- Make is beautiful
+- refactor code
+- make sure server not crash when dev
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
