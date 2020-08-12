@@ -1,65 +1,118 @@
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useEffect, useState } from 'react'
+import io from 'socket.io-client';
+import Peer from 'simple-peer'
 
-export default function Home() {
+let socket
+export default function Page() {
+  const [msg, setMsg] = useState("hello")
+  const [roomName, setRoomName] = useState("")
+  const [listUser, setListUser] = useState([])
+  const [stream, setStream] = useState(undefined)
+  const [incomingCall, setIncomingCall] = useState(false)
+  const [incomingSignal, setIncomingSignal] = useState(undefined)
+  useEffect(() => {
+    socket = io();
+    socket.on("greeting", data => {
+      setMsg(data.message)
+      socket.emit("greeting", { message: "hello from client" })
+    })
+    socket.on("joined-room", data => {
+      setListUser(data.socketInRoom)
+    })
+    socket.on("make-call", data => {
+      setIncomingCall(data.callFrom)
+      setIncomingSignal(data.signal)
+    })
+
+
+    navigator.mediaDevices.getUserMedia({
+      video: true,
+      // audio: true
+    })
+      .then((stream) => {
+        const currentUserVideo = document.getElementById('current-user-video')
+        currentUserVideo.srcObject = stream
+        currentUserVideo.autoplay = true;
+        setStream(stream)
+      }
+    );
+  }, [])
+
+  const handleJoinClick = () => {
+    socket.emit("join-room", { name: roomName })
+  }
+
+  const handleCall = (socketId) => {
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      stream: stream,
+    })
+    peer.on('signal', signal => {
+      socket.emit("make-call", { targetSocket: socketId, fromSocket: socket.id, signal })
+      // peer2.signal(data)
+    })
+
+    peer.on('stream', stream => {
+      const friendUserVideo = document.getElementById('friend-user-video')
+      friendUserVideo.srcObject = stream
+      friendUserVideo.autoplay = true;
+    })
+    socket.on("answer-call", data => {
+      peer.signal(data.signal)
+    })
+  }
+
+  const answerCall = () => {
+    setIncomingCall(false)
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream: stream,
+    });
+    peer.on("signal", signal => {
+      socket.emit("answer-call", { targetSocket: incomingCall, fromSocket: socket.id, signal })
+    })
+
+    peer.on("stream", stream => {
+      const friendUserVideo = document.getElementById('friend-user-video')
+      friendUserVideo.srcObject = stream
+      friendUserVideo.autoplay = true;
+    });
+    peer.signal(incomingSignal)
+  }
+
   return (
-    <div className={styles.container}>
+    <div className="page-container">
       <Head>
-        <title>Create Next App</title>
+        <title>Video Chat</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <div>
+        <video id="current-user-video" />
+      </div>
+      <div>
+        <video id="friend-user-video" />
+      </div>
+      {incomingCall? <div><button onClick={answerCall}>Answer</button></div> : null}
+      <div>Greeting: {msg}</div>
+      <input
+        type="text"
+        onChange={e => setRoomName(e.target.value)}
+        value={roomName}
+      />
+      <button onClick={handleJoinClick}>Join</button>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+      <div>
+        {listUser.map(socketId => {
+          return (
+            <div key={socketId}>
+              <button onClick={() => handleCall(socketId)}>Call->{socketId}</button> {socketId === socket.id ? "<--- is you" : null}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

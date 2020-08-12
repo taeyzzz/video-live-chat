@@ -1,0 +1,40 @@
+*,
+*:after,
+*:before {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: sans-serif;
+  position: relative;
+  z-index: 0;
+  min-height: 100%;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: white;
+  font-size: 20px;
+  font-style: normal;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.page-container{
+  width: 100%;
+  height: 100vh;
+}
+#current-user-video, #friend-user-video{
+  width: 400px;
+  height: 300px;
+}
