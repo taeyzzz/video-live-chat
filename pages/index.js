@@ -28,7 +28,7 @@ export default function Page() {
 
     navigator.mediaDevices.getUserMedia({
       video: true,
-      // audio: true
+      audio: true
     })
       .then((stream) => {
         const currentUserVideo = document.getElementById('current-user-video')
@@ -51,7 +51,6 @@ export default function Page() {
     })
     peer.on('signal', signal => {
       socket.emit("make-call", { targetSocket: socketId, fromSocket: socket.id, signal })
-      // peer2.signal(data)
     })
 
     peer.on('stream', stream => {

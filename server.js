@@ -18,9 +18,9 @@ nextApp.prepare().then(() => {
     socket.emit("greeting", { message: "hello from server" })
     socket.on("join-room", data => {
       socket.join(data.name);
-      io.in(data.name).emit("joined-room", { socketInRoom: Object.keys(io.sockets.adapter.rooms[data.name].sockets) })
+      io.in(data.name).emit("joined-room", { socketInRoom: io.sockets.adapter.rooms[data.name]? Object.keys(io.sockets.adapter.rooms[data.name].sockets) : [] })
       socket.on("disconnect", () => {
-        io.in(data.name).emit("joined-room", { socketInRoom: Object.keys(io.sockets.adapter.rooms[data.name].sockets)})
+        io.in(data.name).emit("joined-room", { socketInRoom: io.sockets.adapter.rooms[data.name]? Object.keys(io.sockets.adapter.rooms[data.name].sockets) : []})
       })
     })
     socket.on("make-call", data => {
